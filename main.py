@@ -11,11 +11,11 @@ from server import Server
 from chess_refac import *
 
 BUFFSIZE = 1024
-ENCODING = "uft-8"
+ENCODING = "utf-8"
 
 def msg_to_move(msg: str) -> dict | None:
     move: dict = json.loads(msg)
-    
+
     if not isinstance(move["start_x"], int) or 7 < move["start_x"] or move["start_x"] < 0: return None
     if not isinstance(move["start_y"], int) or 7 < move["start_y"] or move["start_y"] < 0: return None
     if not isinstance(move["end_x"  ], int) or 7 < move["end_x"  ] or move["end_x"  ] < 0: return None
@@ -65,6 +65,6 @@ def chess_match(white: tuple[Socket, str], black: tuple[Socket, str]) -> None:
 
 
 if __name__ == "__main__":
-    server = Server("localhost", 8080, chess_match)
+    server = Server("localhost", 8080, chess_match, ENCODING)
     server_thread = Thread(target=server.listen)
     server_thread.start()

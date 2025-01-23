@@ -9,17 +9,15 @@ def default_handler(player1: tuple[Socket, str], player2: tuple[Socket, str]) ->
 class Server(Socket):
     def __init__(self,
             host: str, port: int,
-            match_thread_function: Callable[
-                [tuple[Socket, str], tuple[Socket, str]],
-                None] = default_handler
+            match_thread_function,
+            encoding: str = "utf-8"
         ) -> None:
         super().__init__(AF_INET, SOCK_STREAM)
         self.bind((host, port))
         self.match_thread_target = match_thread_function
-        self.matchmaking_queue: dict[str, Socket] = []
+        self.encoding = encoding
+        self.matchmaking_queue: dict[str, Socket] = {}
         self.match_threads: list[Thread] = []
-
-        # self.matched: dict[tuple[Socket, str], int] = {}
     
     def info(self, message: str) -> None:
         print(f"[SERVER] {message}")
@@ -30,16 +28,17 @@ class Server(Socket):
         while True:
             self.info("Listening for clients...")
             conn, addr = self.accept()
-            self.info("New connection: {addr}")
-            if addr in self.matchmaking_queue.keys():
+            self.info(f"New connection: {addr}")
+
+            if addr in self.matchmaking_queue:
                 self.matchmaking_queue.pop(addr)
-                conn.send(r"removed your from queue")
-                self.info("Removed {addr} from queue")
+                conn.send("removed your from queue".encode(self.encoding))
+                self.info(f"Removed {addr} from queue")
             else:
                 self.matchmaking_queue[addr] = conn
-                conn.send(r"added to queue")
-                self.info("Added {addr} to queue")
-                self.try_make_match()
+                conn.send("added to queue".encode(self.encoding))
+                self.info(f"Added {addr} to queue")
+                made_match = self.try_make_match()
     
     def try_make_match(self) -> bool:
         if len(self.matchmaking_queue) < 2:
@@ -50,10 +49,9 @@ class Server(Socket):
         player1 = self.matchmaking_queue.popitem()
         player2 = self.matchmaking_queue.popitem()
 
-        self.match_threads.append(
-            Thread(target=self.match_thread_target, args=(player1, player2))
-        )
-        self.match_threads[-1].start()
+        new_match_thread = Thread(target=self.match_thread_target, args=(player1, player2))
+        new_match_thread.start()
+        self.match_threads.append(new_match_thread)
 
         return True
 
