@@ -38,7 +38,7 @@ class Server(Socket):
                 self.matchmaking_queue[addr] = conn
                 conn.send("added to queue".encode(self.encoding))
                 self.info(f"Added {addr} to queue")
-                made_match = self.try_make_match()
+                self.try_make_match()
     
     def try_make_match(self) -> bool:
         if len(self.matchmaking_queue) < 2:
