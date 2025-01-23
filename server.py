@@ -21,20 +21,24 @@ class Server(Socket):
 
         # self.matched: dict[tuple[Socket, str], int] = {}
     
+    def info(self, message: str) -> None:
+        print(f"[SERVER] {message}")
+    
     def listen(self) -> None:
-        self.listen()
+        super().listen()
 
         while True:
+            self.info("Listening for clients...")
             conn, addr = self.accept()
-            print(f"[SERVER] New connection: {addr}")
+            self.info("New connection: {addr}")
             if addr in self.matchmaking_queue.keys():
                 self.matchmaking_queue.pop(addr)
                 conn.send(r"removed your from queue")
-                print(f"[SERVER] Removed {addr} from queue")
+                self.info("Removed {addr} from queue")
             else:
                 self.matchmaking_queue[addr] = conn
                 conn.send(r"added to queue")
-                print(f"[SERVER] Added {addr} to queue")
+                self.info("Added {addr} to queue")
                 self.try_make_match()
     
     def try_make_match(self) -> bool:

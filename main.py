@@ -6,105 +6,65 @@ from socket import socket as Socket
 from threading import Thread
 import json
 
+from chess_utils import GameState
 from server import Server
 from chess_refac import *
 
-def todo(task):
-    print(f"[TODO] {task}")
-    exit()
+BUFFSIZE = 1024
+ENCODING = "uft-8"
 
-Open_game_token: float | None = None
+def msg_to_move(msg: str) -> dict | None:
+    move: dict = json.loads(msg)
+    
+    if not isinstance(move["start_x"], int) or 7 < move["start_x"] or move["start_x"] < 0: return None
+    if not isinstance(move["start_y"], int) or 7 < move["start_y"] or move["start_y"] < 0: return None
+    if not isinstance(move["end_x"  ], int) or 7 < move["end_x"  ] or move["end_x"  ] < 0: return None
+    if not isinstance(move["end_y"  ], int) or 7 < move["end_y"  ] or move["end_y"  ] < 0: return None
+    
+    return move
 
-matches_looking_for_opponent = []
-# "example",
+def chess_match(white: tuple[Socket, str], black: tuple[Socket, str]) -> None:
+    game = Game()
+    black[0].send(r"match start")
+    white[0].send(r"match start")
 
-matches = {}
-# "example": { "board_token": "1671365", "w": addr1, "b": addr2, "s": [addr3] },
+    while game.state in [GameState.WHITE_TURN, GameState.BLACK_TURN]:
+        white[0].send(r"ur turn")
+        while game.state == GameState.WHITE_TURN:
+            msg = white[0].recv(BUFFSIZE).decode(ENCODING)
+            move = msg_to_move(msg)
+            if move != None and game.make_move_if_valid(move, Color.WHITE):
+                break
+            white[0].send(r"try again dumbass")
 
-active_player_tokens = {}
-# addr1: { "match": "example", "type": "w" },
-# addr2: { "match": "example", "type": "b" },
-# addr3: { "match": "example", "type": "s" },
+        if game.state not in [GameState.WHITE_TURN, GameState.BLACK_TURN]:
+            break
 
-def join_match(addr: tuple[str, int]):
-    active_player_tokens[addr] = {
-        "match": "???",
-        "type": "?"
-    }
-    pass
-
-def handle_client(conn: Socket, addr: tuple[str, int], client_idx: int) -> None:
-    try:
-        request: dict = json.loads(conn.recv(1024).decode("utf-8"))
-    except Exception:
-        # TODO: close any open matches
-        conn.close()
-        return
-
-    response: dict | None = None
-
-    match request["type"]:
-        case "quit":
-            # TODO: close any open matches
-            conn.close()
-            return
-        case "move":
-            response = {
-                "type": "move-feedback",
-                "message": submit_move(request["player_token"], request["start"], request["end"])
-            }
-        case "join matchmaking":
-            # search for matches to join
-            if len(matches_looking_for_opponent) > 0:
-                join_match(addr, )
-                pass # join first match and remove from list
-            # if we can't find one, just create one and make it so that others can join
-            pass
+        black[0].send(r"ur turn")
+        while game.state == GameState.BLACK_TURN:
+            msg = black[0].recv(BUFFSIZE)
+            was_move_valid = game.make_move_if_valid(msg, Color.BLACK)
+            if not was_move_valid:
+                black[0].send(r"try again dumbass")
+    
+    match game.state:
+        case GameState.DRAW:
+            white[0].send(r"draw")
+            black[0].send(r"draw")
+        case GameState.WHITE_WON:
+            white[0].send(r"you won")
+            black[0].send(r"you lost")
+        case GameState.BLACK_WON:
+            white[0].send(r"you lost")
+            black[0].send(r"you won")
         case _:
-            response = {"type": "bad request"}
-    
-    if response != None:
-        conn.send(json.dumps(response).encode("utf-8"))
-    conn.close()
+            print("unhandled game ending")
 
-# Start server
-server = Server("localhost", 8080, handle_client)
-server_thread = Thread(target=server.listen)
-server_thread.start()
+    white[0].close()
+    black[0].close()
 
-'''
-elif request["type"] == "move":
-    if match_token == None: # client in an active match?
-        response = {"type": "move blocked", "message": "not in a match"}
-    
-    try:
-        start_x = int(request["start_x"])
-        start_y = int(request["start_y"])
-        end_x = int(request["end_x"])
-        end_y = int(request["end_y"])
-    except Exception:
-        response = {"type": "move_blocked", "message": "bad request"}
-    else:
-        feedback = submit_move(
-            match_token,
-            (start_x, start_y), (end_x, end_y),
-            Color.WHITE # or black idk how to determine for now
-        )
 
-        if feedback == "success":
-            response = {"type": "success"}
-        elif feedback == "illegal_move":
-            response = {"type": "move blocked", "message": "illegal move"}
-        elif feedback == "not_ur_turn":
-            response = {"type": "move blocked", "message": "not ur turn"}
-        else:
-            response = {"type": "move blocked", "message": "unknown error"}
-elif request["type"] == "matchmaking join":
-    available_for_matchmaking = True
-elif request["type"] == "matchmaking leave":
-    available_for_matchmaking = False
-elif request["type"] == "match accept":
-    pass
-elif request["type"] == "set options":
-    # set match making options
-    pass'''
+if __name__ == "__main__":
+    server = Server("localhost", 8080, chess_match)
+    server_thread = Thread(target=server.listen)
+    server_thread.start()
