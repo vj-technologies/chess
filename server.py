@@ -2,9 +2,11 @@ if __name__ == "__main__":
     print(f"\"{__file__}\" is supposed to be imported.")
     exit(1)
 
-from threading import Thread
+from datetime import datetime
 from socket import socket as Socket, AF_INET, SOCK_STREAM
+from threading import Thread
 from typing import Callable
+import os.path
 
 def default_handler(player1: Socket, player2: Socket) -> None:
     player1.close()
@@ -14,7 +16,8 @@ class Server(Socket):
     def __init__(self,
             host: str, port: int,
             match_thread_function: Callable[[Socket, Socket], None] = default_handler,
-            encoding: str = "utf-8"
+            encoding: str = "utf-8",
+            log_file: str = None
         ) -> None:
         super().__init__(AF_INET, SOCK_STREAM)
         self.addr = (host, port)
@@ -23,16 +26,30 @@ class Server(Socket):
         self.encoding = encoding
         self.matchmaking_queue: dict[str, Socket] = {}
         self.match_threads: list[Thread] = []
+        self._log_file = log_file if os.path.isfile(log_file) else None
     
+    def log(self, status: str, message: str) -> None:
+        date_time_stamp = datetime.now().strftime("%d.%m.%Y %H:%M:%S")
+        log = f"[{status}] {date_time_stamp} {message}"
+        print(log)
+        if self._log_file:
+            with open(self._log_file, 'a') as logs:
+                logs.write(f"{log}\n")
+
     def info(self, message: str) -> None:
-        print(f"[SERVER] {message}")
+        self.log("INFO", message)
+
+    def warn(self, message: str) -> None:
+        self.log("WARN", message)
+
+    def error(self, message: str) -> None:
+        self.log("ERROR", message)
     
     def listen(self) -> None:
-        self.info(f"Listening on ({self.addr})")
+        self.info(f"Listening for clients on {self.addr}")
         super().listen()
 
         while True:
-            self.info("Listening for clients...")
             conn, addr = self.accept()
             self.info(f"New connection: {addr}")
 

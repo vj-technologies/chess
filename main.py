@@ -2,6 +2,7 @@ if __name__ != "__main__":
     print(f"\"{__file__}\" is not meant to be imported.")
     exit(1)
 
+from datetime import datetime
 from socket import socket as Socket
 import json
 
@@ -74,5 +75,9 @@ def chess_match(white: Socket, black: Socket) -> None:
 
 
 if __name__ == "__main__":
-    server = Server("localhost", 8080, chess_match, ENCODING)
+    date_time_stamp = datetime.now().strftime("%d.%m.%Y_%H.%M.%S")
+    log_file = f"logs/{date_time_stamp}.log"
+    with open(log_file, "w+") as file:
+        file.write(f"[INFO] {date_time_stamp.replace('_', ' ')} Log file created.\n")
+    server = Server("localhost", 8080, chess_match, ENCODING, log_file)
     server.listen()
