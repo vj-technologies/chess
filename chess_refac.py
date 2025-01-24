@@ -608,7 +608,7 @@ class Game:
         Returns whether or not the move was valid
         '''
         result = self._submit_move(move, color)
-        # TODO: remember to update the self.state
+        # TODO: remember to update the self.state in the case of checkmate etc.
         if result == "success":
             match self.active_color:
                 case Color.WHITE: self.active_color = Color.BLACK
