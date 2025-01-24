@@ -22,45 +22,55 @@ def msg_to_move(msg: str) -> dict | None:
     
     return move
 
-def chess_match(white: tuple[Socket, str], black: tuple[Socket, str]) -> None:
+def chess_match(white: Socket, black: Socket) -> None:
     game = Game()
-    black[0].send("match start".encode(ENCODING))
-    white[0].send("match start".encode(ENCODING))
+    black.send("match start".encode(ENCODING))
+    white.send("match start".encode(ENCODING))
+    network_error = False
+    match_over_check = lambda: (game.state in [GameState.WHITE_TURN, GameState.BLACK_TURN]) and not network_error
 
-    while game.state in [GameState.WHITE_TURN, GameState.BLACK_TURN]:
-        white[0].send("ur turn".encode(ENCODING))
+    while match_over_check():
+        white.send("ur turn".encode(ENCODING))
         while game.state == GameState.WHITE_TURN:
-            msg = white[0].recv(BUFFSIZE).decode(ENCODING)
-            move = msg_to_move(msg)
-            if move != None and game.make_move_if_valid(move, Color.WHITE):
+            try:
+                msg = white.recv(BUFFSIZE).decode(ENCODING)
+            except Exception:
+                network_error = True
                 break
-            white[0].send("try again dumbass".encode(ENCODING))
+            move = msg_to_move(msg)
+            if move and game.make_move_if_valid(move, Color.WHITE):
+                break
+            white.send("try again dumbass".encode(ENCODING))
 
-        if game.state not in [GameState.WHITE_TURN, GameState.BLACK_TURN]:
-            break
+        if match_over_check(): break
 
-        black[0].send("ur turn".encode(ENCODING))
+        black.send("ur turn".encode(ENCODING))
         while game.state == GameState.BLACK_TURN:
-            msg = black[0].recv(BUFFSIZE)
-            was_move_valid = game.make_move_if_valid(msg, Color.BLACK)
-            if not was_move_valid:
-                black[0].send("try again dumbass".encode(ENCODING))
+            try:
+                msg = black.recv(BUFFSIZE).decode(ENCODING)
+            except Exception:
+                network_error = True
+                break
+            move = msg_to_move(msg)
+            if move and game.make_move_if_valid(move, Color.BLACK):
+                break
+            black.send("try again dumbass".encode(ENCODING))
     
     match game.state:
         case GameState.DRAW:
-            white[0].send(r"draw")
-            black[0].send(r"draw")
+            white.send("draw".encode(ENCODING))
+            black.send("draw".encode(ENCODING))
         case GameState.WHITE_WON:
-            white[0].send(r"you won")
-            black[0].send(r"you lost")
+            white.send("you won".encode(ENCODING))
+            black.send("you lost".encode(ENCODING))
         case GameState.BLACK_WON:
-            white[0].send(r"you lost")
-            black[0].send(r"you won")
+            white.send("you lost".encode(ENCODING))
+            black.send("you won".encode(ENCODING))
         case _:
             print("unhandled game ending")
 
-    white[0].close()
-    black[0].close()
+    white.close()
+    black.close()
 
 
 if __name__ == "__main__":

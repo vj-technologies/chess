@@ -6,14 +6,14 @@ from threading import Thread
 from socket import socket as Socket, AF_INET, SOCK_STREAM
 from typing import Callable
 
-def default_handler(player1: tuple[Socket, str], player2: tuple[Socket, str]) -> None:
-    player1[0].close()
-    player2[0].close()
+def default_handler(player1: Socket, player2: Socket) -> None:
+    player1.close()
+    player2.close()
 
 class Server(Socket):
     def __init__(self,
             host: str, port: int,
-            match_thread_function: Callable[[tuple[Socket, str], tuple[Socket, str]], None] = default_handler,
+            match_thread_function: Callable[[Socket, Socket], None] = default_handler,
             encoding: str = "utf-8"
         ) -> None:
         super().__init__(AF_INET, SOCK_STREAM)
@@ -44,9 +44,8 @@ class Server(Socket):
                 self.matchmaking_queue[addr] = conn
                 conn.send("added to queue".encode(self.encoding))
                 self.info(f"Added {addr} to queue")
-                match self.try_make_match():
-                    case True:  self.info("New match created")
-                    case False: self.info("Cannot create match")
+
+                self.try_make_match()
     
     def try_make_match(self) -> bool:
         if len(self.matchmaking_queue) < 2:
@@ -57,8 +56,9 @@ class Server(Socket):
         player1 = self.matchmaking_queue.popitem()
         player2 = self.matchmaking_queue.popitem()
         
-        new_match_thread = Thread(target=self.match_thread_target, args=(player1, player2))
+        new_match_thread = Thread(target=self.match_thread_target, args=(player1[1], player2[1]))
         new_match_thread.start()
         self.match_threads.append(new_match_thread)
-        
+
+        self.info(f"Match created: {player1[0]} vs {player2[0]}")        
         return True
