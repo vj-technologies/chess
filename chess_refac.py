@@ -29,8 +29,8 @@ def default_pieces() -> list[Piece]:
     pieces.append(King(7, 4, Color.BLACK))
 
 class Pawn(Piece):
-    def __init__(self, x: int, y: int, color: Color,token:int) -> None:
-        super().__init__("Pawn", x, y, color, "P" if color == Color.WHITE else "p", token)
+    def __init__(self, x: int, y: int, color: Color) -> None:
+        super().__init__("Pawn", x, y, color, "P" if color == Color.WHITE else "p")
     
     def check_if_legal(self, x: int, y: int, game) -> None | bool:
         curr_holder = game.find_piece(x, y)
@@ -58,9 +58,9 @@ class Pawn(Piece):
                 return False
 
 class Rook(Piece):
-    def __init__(self, x: int, y: int, color: Color,token:int) -> None:
+    def __init__(self, x: int, y: int, color: Color) -> None:
         self.casteling = True
-        super().__init__("Rook", x, y, color, "R" if color == Color.WHITE else "r",token)
+        super().__init__("Rook", x, y, color, "R" if color == Color.WHITE else "r")
     
     def check_if_legal(self, x: int, y: int, game) -> bool:
         legal_moves = []
@@ -120,8 +120,8 @@ class Rook(Piece):
         self.casteling = False
 
 class Knight(Piece):
-    def __init__(self, x: int, y: int, color: Color,token:int) -> None:
-        super().__init__("Knight", x, y, color, "N" if color == Color.WHITE else "n",token)
+    def __init__(self, x: int, y: int, color: Color) -> None:
+        super().__init__("Knight", x, y, color, "N" if color == Color.WHITE else "n")
     
     def check_if_legal(self, x: int, y: int, game) -> None | bool:
         curr_holder = game.find_piece(x, y)
@@ -150,8 +150,8 @@ class Knight(Piece):
                 return True
 
 class Bishop(Piece):
-    def __init__(self, x: int, y: int, color: Color,token:int) -> None:
-        super().__init__("Bishop", x, y, color, "B" if color == Color.WHITE else "b",token)
+    def __init__(self, x: int, y: int, color: Color) -> None:
+        super().__init__("Bishop", x, y, color, "B" if color == Color.WHITE else "b")
     
     def check_if_legal(self, x: int, y: int, game) -> bool:
         legal_moves = []
@@ -213,8 +213,8 @@ class Bishop(Piece):
             return False
 
 class Queen(Piece):
-    def __init__(self, x: int, y: int, color: Color,token:int) -> None:
-        super().__init__("Queen", x, y, color, "Q" if color == Color.WHITE else "q",token)
+    def __init__(self, x: int, y: int, color: Color) -> None:
+        super().__init__("Queen", x, y, color, "Q" if color == Color.WHITE else "q")
     
     def check_if_legal(self, x: int, y: int, game):
         legal_moves = []
@@ -318,12 +318,13 @@ class Queen(Piece):
             return False
 
 class King(Piece):
-    def __init__(self, x: int, y: int, color: Color,token:int) -> None:
+    def __init__(self, x: int, y: int, color: Color) -> None:
         self.casteling = True
-        super().__init__("King", x, y, color, "K" if color == Color.WHITE else "k",token)
+        super().__init__("King", x, y, color, "K" if color == Color.WHITE else "k")
     
-        print(f"{self.color} won!")
-        exit() # TODO
+        # FIXME wtf is this? xd
+        # print(f"{self.color} won!")
+        # exit() # TODO
     
     def move(self, x, y) -> None:
         super().move(x, y)

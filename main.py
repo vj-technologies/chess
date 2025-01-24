@@ -3,7 +3,6 @@ if __name__ != "__main__":
     exit(1)
 
 from socket import socket as Socket
-from threading import Thread
 import json
 
 from chess_utils import GameState
@@ -25,27 +24,27 @@ def msg_to_move(msg: str) -> dict | None:
 
 def chess_match(white: tuple[Socket, str], black: tuple[Socket, str]) -> None:
     game = Game()
-    black[0].send(r"match start")
-    white[0].send(r"match start")
+    black[0].send("match start".encode(ENCODING))
+    white[0].send("match start".encode(ENCODING))
 
     while game.state in [GameState.WHITE_TURN, GameState.BLACK_TURN]:
-        white[0].send(r"ur turn")
+        white[0].send("ur turn".encode(ENCODING))
         while game.state == GameState.WHITE_TURN:
             msg = white[0].recv(BUFFSIZE).decode(ENCODING)
             move = msg_to_move(msg)
             if move != None and game.make_move_if_valid(move, Color.WHITE):
                 break
-            white[0].send(r"try again dumbass")
+            white[0].send("try again dumbass".encode(ENCODING))
 
         if game.state not in [GameState.WHITE_TURN, GameState.BLACK_TURN]:
             break
 
-        black[0].send(r"ur turn")
+        black[0].send("ur turn".encode(ENCODING))
         while game.state == GameState.BLACK_TURN:
             msg = black[0].recv(BUFFSIZE)
             was_move_valid = game.make_move_if_valid(msg, Color.BLACK)
             if not was_move_valid:
-                black[0].send(r"try again dumbass")
+                black[0].send("try again dumbass".encode(ENCODING))
     
     match game.state:
         case GameState.DRAW:
@@ -66,5 +65,4 @@ def chess_match(white: tuple[Socket, str], black: tuple[Socket, str]) -> None:
 
 if __name__ == "__main__":
     server = Server("localhost", 8080, chess_match, ENCODING)
-    server_thread = Thread(target=server.listen)
-    server_thread.start()
+    server.listen()
