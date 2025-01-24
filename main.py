@@ -28,9 +28,8 @@ def chess_match(white: Socket, black: Socket) -> None:
     black.send("match start".encode(ENCODING))
     white.send("match start".encode(ENCODING))
     network_error = False
-    match_over_check = lambda: (game.state in [GameState.WHITE_TURN, GameState.BLACK_TURN]) and not network_error
 
-    while match_over_check():
+    while (game.state in [GameState.WHITE_TURN, GameState.BLACK_TURN]) and not network_error:
         white.send("ur turn".encode(ENCODING))
         while game.state == GameState.WHITE_TURN:
             try:
@@ -43,7 +42,8 @@ def chess_match(white: Socket, black: Socket) -> None:
                 break
             white.send("try again dumbass".encode(ENCODING))
 
-        if match_over_check(): break
+        if (game.state in [GameState.WHITE_TURN, GameState.BLACK_TURN]) and not network_error:
+            break
 
         black.send("ur turn".encode(ENCODING))
         while game.state == GameState.BLACK_TURN:
@@ -68,7 +68,7 @@ def chess_match(white: Socket, black: Socket) -> None:
             white.send("you lost".encode(ENCODING))
             black.send("you won".encode(ENCODING))
         case _:
-            print("unhandled game ending")
+            print(f"Unhandled game ending: {game.state}")
 
     white.close()
     black.close()

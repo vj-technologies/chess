@@ -27,6 +27,8 @@ def default_pieces() -> list[Piece]:
 
     pieces.append(King(0, 4, Color.WHITE))
     pieces.append(King(7, 4, Color.BLACK))
+    
+    return pieces
 
 class Pawn(Piece):
     def __init__(self, x: int, y: int, color: Color) -> None:
@@ -605,12 +607,16 @@ class Game:
         '''
         Returns whether or not the move was valid
         '''
-        result = self._submit_move(move["start"], move["end"], color)
-        # TODO: remember to update the self.state
+        result = self._submit_move(move, color)
+        # TODO: remember to update the self.state in the case of checkmate etc.
         if result == "success":
             match self.active_color:
                 case Color.WHITE: self.active_color = Color.BLACK
                 case Color.BLACK: self.active_color = Color.WHITE
+            match self.state:
+                case GameState.WHITE_TURN: self.state = GameState.BLACK_TURN
+                case GameState.BLACK_TURN: self.state = GameState.WHITE_TURN
+                case _: print(f"What to do in this case? _submit_move returned \"succes\" {self.state=}")
 
         return result
 
