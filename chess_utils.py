@@ -21,6 +21,10 @@ class Piece:
     def move(self, x, y) -> None:
         self.x = x
         self.y = y
+    
+    def check_if_legal(self, _x: int, _y: int, _game) -> bool:
+        print("[FIXME] Piece.check_if_legal(...) is not overidden somewhere!")
+        exit(1)
 
 class GameState(Enum):
     WHITE_TURN = 1

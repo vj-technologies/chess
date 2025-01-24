@@ -336,7 +336,7 @@ class King(Piece):
         if x > 7 or x < 0 or y > 7 or y < 0:
             return False
 
-        booly = False
+        booly = False # What does `booly` do?
         if   x == self.x + 1 and y == self.y    : booly = True
         elif x == self.x - 1 and y == self.y    : booly = True
         elif x == self.x     and y == self.y + 1: booly = True
@@ -359,7 +359,7 @@ class King(Piece):
         if game.checkmate(x, y, self.color):
             return False
         
-        if booly == True:
+        if booly:
             if curr_holder != None:
                 if curr_holder.color != self.color:
                     game.throw_piece(curr_holder)
@@ -368,6 +368,7 @@ class King(Piece):
                     return False
             else:
                 return True
+        # FIXME/TODO: What to return when `booly == False`?
 
 # def selection(board_index):
 #     while True:
