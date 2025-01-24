@@ -605,7 +605,7 @@ class Game:
         '''
         Returns whether or not the move was valid
         '''
-        result = self._submit_move(move["start"], move["end"], color)
+        result = self._submit_move(move, color)
         # TODO: remember to update the self.state
         if result == "success":
             match self.active_color:
