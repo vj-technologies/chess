@@ -603,10 +603,13 @@ class Game:
         
         return "success"
 
-    def make_move_if_valid(self, move: dict, color: Color) -> str:
+    def make_move_if_valid(self, move: dict, color: Color) -> bool:
         '''
         Returns whether or not the move was valid
         '''
+        if move == None:
+            return False
+        
         result = self._submit_move(move, color)
         # TODO: remember to update the self.state in the case of checkmate etc.
         if result == "success":
@@ -618,7 +621,7 @@ class Game:
                 case GameState.BLACK_TURN: self.state = GameState.WHITE_TURN
                 case _: print(f"What to do in this case? _submit_move returned \"succes\" {self.state=}")
 
-        return result
+        return result == "success"
 
 if __name__ == "__main__":
     terminal_board = [[" " for _ in range(8)] for _ in range(8)]
