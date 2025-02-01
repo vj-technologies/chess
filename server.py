@@ -57,24 +57,32 @@ class Server(Socket):
     def error(self, message: str) -> None:
         self.log("ERROR", message)
     
+    def handle_connection(self, conn: Socket, addr: str) -> None:
+        self.info(f"New connection: {addr}")
+
+        if addr in self.matchmaking_queue:
+            self.matchmaking_queue.pop(addr)
+            conn.send("removed your from queue".encode(self.encoding))
+            self.info(f"Removed {addr} from queue")
+        else:
+            self.matchmaking_queue[addr] = conn
+            conn.send("added to queue".encode(self.encoding))
+            self.info(f"Added {addr} to queue")
+
+            self.try_make_match()
+
     def listen(self) -> None:
         self.info(f"Listening for clients on {self.addr}")
         super().listen()
 
         while True:
-            conn, addr = self.accept()
-            self.info(f"New connection: {addr}")
-
-            if addr in self.matchmaking_queue:
-                self.matchmaking_queue.pop(addr)
-                conn.send("removed your from queue".encode(self.encoding))
-                self.info(f"Removed {addr} from queue")
+            try:
+                conn, addr = self.accept()
+            except KeyboardInterrupt:
+                self.info("Server was closed using keyboard interrupt")
+                break
             else:
-                self.matchmaking_queue[addr] = conn
-                conn.send("added to queue".encode(self.encoding))
-                self.info(f"Added {addr} to queue")
-
-                self.try_make_match()
+                self.handle_connection(conn, addr)
     
     def try_make_match(self) -> bool:
         if len(self.matchmaking_queue) < 2:
