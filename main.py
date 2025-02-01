@@ -7,11 +7,11 @@ from chess_utils import GameState
 from server import Server
 from chess_refac import *
 import json
-import socket
 
 BUFFSIZE = 1024
 ENCODING = "utf-8"
 LOGS_DIR = "logs/"
+SERVER_CONFIG_FILE = "server.conf"
 
 def msg_to_move(msg: str) -> dict | None:
     try:
@@ -84,7 +84,18 @@ def chess_match(white: Socket, black: Socket) -> None:
 
 
 if __name__ == "__main__":
-    host = socket.gethostbyname(socket.gethostname())
-    print(f"Host: {host}")
-    server = Server(host, 8080, chess_match, ENCODING, LOGS_DIR)
+    # define default values here
+    conf = {
+        "host": "127.0.0.1",
+        "port": "8080"
+    }
+
+    # load server configuration values
+    with open(SERVER_CONFIG_FILE, "r") as file:
+        for line in file.readlines():
+            line = line.strip()
+            lol = line.split("=", 1)
+            conf[lol[0]] = lol[1]
+    
+    server = Server(conf["host"], conf["port"], chess_match, ENCODING, LOGS_DIR)
     server.listen()

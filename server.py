@@ -32,7 +32,8 @@ class Server(Socket):
         self._log_file = None
         if os.path.isdir(logs_directory):
             now = datetime.now()
-            self._log_file = f"logs/{now.strftime("%Y %m %d %Hh%Mm%Ss")}.log"
+            filename = now.strftime('%Y %m %d %Hh%Mm%Ss')
+            self._log_file = f"logs/{filename}.log"
             with open(self._log_file, "w+") as file:
                 file.write(f"[INFO] {now.strftime(TIME_STAMP_FORMAT)} Log file created.\n")
         elif logs_directory != None:
