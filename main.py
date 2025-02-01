@@ -7,6 +7,7 @@ from chess_utils import GameState
 from server import Server
 from chess_refac import *
 import json
+import socket
 
 BUFFSIZE = 1024
 ENCODING = "utf-8"
@@ -83,5 +84,7 @@ def chess_match(white: Socket, black: Socket) -> None:
 
 
 if __name__ == "__main__":
-    server = Server("localhost", 8080, chess_match, ENCODING, LOGS_DIR)
+    host = socket.gethostbyname(socket.gethostname())
+    print(f"Host: {host}")
+    server = Server(host, 8080, chess_match, ENCODING, LOGS_DIR)
     server.listen()
