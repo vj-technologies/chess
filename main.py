@@ -87,7 +87,7 @@ if __name__ == "__main__":
     # define default values here
     conf = {
         "host": "127.0.0.1",
-        "port": "8080"
+        "port": 8080
     }
 
     # load server configuration values
@@ -97,5 +97,10 @@ if __name__ == "__main__":
             lol = line.split("=", 1)
             conf[lol[0]] = lol[1]
     
-    server = Server(conf["host"], conf["port"], chess_match, ENCODING, LOGS_DIR)
-    server.listen()
+    try:
+        port = int(conf["port"])
+    except Exception as e:
+        print(e)
+    else:
+        server = Server(conf["host"], port, chess_match, ENCODING, LOGS_DIR)
+        server.listen()
