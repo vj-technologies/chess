@@ -8,7 +8,7 @@ from threading import Thread
 from typing import Callable
 import os.path
 
-TIME_STAMP_FORMAT = "%d.%m.%Y %H:%M:%S"
+TIME_STAMP_FORMAT = "%d.%m.%Y %H:%M:%S" # this is for inside the log files
 
 def default_handler(player1: Socket, player2: Socket) -> None:
     player1.close()
@@ -16,13 +16,17 @@ def default_handler(player1: Socket, player2: Socket) -> None:
 
 class Server(Socket):
     def __init__(self,
-            host: str, port: int,
             match_thread_function: Callable[[Socket, Socket], None] = default_handler,
             encoding: str = "utf-8",
-            logs_directory: str = None
+            logs_directory: str = None,
+            conf: dict = {
+                "host": "127.0.1",
+                "port": 9999,
+                "filename": "%Y_%m_%d_%Hh%Mm%Ss"
+            }
         ) -> None:
         super().__init__(AF_INET, SOCK_STREAM)
-        self.addr = (host, port)
+        self.addr = (conf["host"], conf["port"])
         self.bind(self.addr)
         self.match_thread_target = match_thread_function
         self.encoding = encoding
@@ -32,7 +36,7 @@ class Server(Socket):
         self._log_file = None
         if os.path.isdir(logs_directory):
             now = datetime.now()
-            filename = now.strftime('%Y %m %d %Hh%Mm%Ss')
+            filename = now.strftime(conf["filename"])
             self._log_file = f"logs/{filename}.log"
             with open(self._log_file, "w+") as file:
                 file.write(f"[INFO] {now.strftime(TIME_STAMP_FORMAT)} Log file created.\n")
@@ -78,7 +82,7 @@ class Server(Socket):
         while True:
             try:
                 conn, addr = self.accept()
-            except KeyboardInterrupt:
+            except KeyboardInterrupt: # this only works on Linux (tested on debian)
                 self.info("Server was closed using keyboard interrupt")
                 break
             else:
