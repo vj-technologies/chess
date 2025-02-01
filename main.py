@@ -84,7 +84,11 @@ def chess_match(white: Socket, black: Socket) -> None:
 
 
 if __name__ == "__main__":
-    conf = {}
+    conf = {
+        "host": "127.0.0.1",
+        "port": 9999,
+        "filename": "%Y_%m_%d_%Hh%Mm%Ss"
+    }
 
     # load server configuration values
     with open(SERVER_CONFIG_FILE, "r") as file:
@@ -98,5 +102,5 @@ if __name__ == "__main__":
     except Exception as e:
         print(e)
     else:
-        server = Server(chess_match, ENCODING, LOGS_DIR, conf)
+        server = Server(conf, chess_match, ENCODING, LOGS_DIR)
         server.listen()

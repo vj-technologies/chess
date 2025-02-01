@@ -16,14 +16,10 @@ def default_handler(player1: Socket, player2: Socket) -> None:
 
 class Server(Socket):
     def __init__(self,
+            conf: dict,
             match_thread_function: Callable[[Socket, Socket], None] = default_handler,
             encoding: str = "utf-8",
             logs_directory: str = None,
-            conf: dict = {
-                "host": "127.0.1",
-                "port": 9999,
-                "filename": "%Y_%m_%d_%Hh%Mm%Ss"
-            }
         ) -> None:
         super().__init__(AF_INET, SOCK_STREAM)
         self.addr = (conf["host"], conf["port"])
