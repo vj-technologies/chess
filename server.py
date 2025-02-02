@@ -85,7 +85,7 @@ class Server(Socket):
         self.encoding: str = conf["encoding"]
         self.buffsize: int = conf["buffsize"]
         self.time_stamp_format: str = conf["time_stamp_format"]
-        self.logs_dir: str = conf["logs_directory"]
+        self.logs_dir: str = conf["logs_dir"]
 
         self.bind(self.addr)
         self.match_thread_target: Callable[[Socket, Socket, str, int], None] = match_thread_function
