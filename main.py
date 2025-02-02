@@ -8,10 +8,16 @@ from server import Server
 from chess_refac import *
 import json
 
-BUFFSIZE = 1024
-ENCODING = "utf-8"
-LOGS_DIR = "logs/"
 SERVER_CONFIG_FILE = "server.conf"
+DEFAULT_SERVER_CONF = {
+    "host": "127.0.0.1",
+    "port": 9999,
+    "buffsize": 1024,
+    "encoding": "utf-8",
+    "logs_dir": "logs/",
+    "filename": "%Y_%m_%d_%Hh%Mm%Ss",
+    "time_stamp_format": "%d.%m.%Y %H:%M:%S"
+}
 
 def msg_to_move(msg: str) -> dict | None:
     try:
@@ -26,17 +32,17 @@ def msg_to_move(msg: str) -> dict | None:
     
     return move
 
-def chess_match(white: Socket, black: Socket) -> None:
+def chess_match(white: Socket, black: Socket, encoding: str, buffsize: int) -> None:
     game = Game()
-    black.send("match start".encode(ENCODING))
-    white.send("match start".encode(ENCODING))
+    black.send("match start".encode(encoding))
+    white.send("match start".encode(encoding))
     network_error = False
 
     while game.state == GameState.WHITE_TURN and not network_error:
-        white.send("ur turn".encode(ENCODING))
+        white.send("ur turn".encode(encoding))
         while game.state == GameState.WHITE_TURN:
             try:
-                msg = white.recv(BUFFSIZE).decode(ENCODING)
+                msg = white.recv(buffsize).decode(encoding)
             except Exception as e:
                 print(f"Network Error occoured: {e}")
                 network_error = True
@@ -46,15 +52,15 @@ def chess_match(white: Socket, black: Socket) -> None:
             if game.make_move_if_valid(move, Color.WHITE):
                 # TODO: Send current board configuration or latest move to the other player.
                 break
-            white.send("try again dumbass".encode(ENCODING))
+            white.send("try again dumbass".encode(encoding))
 
         if game.state != GameState.BLACK_TURN or network_error:
             break
 
-        black.send("ur turn".encode(ENCODING))
+        black.send("ur turn".encode(encoding))
         while game.state == GameState.BLACK_TURN:
             try:
-                msg = black.recv(BUFFSIZE).decode(ENCODING)
+                msg = black.recv(buffsize).decode(encoding)
             except Exception as e:
                 print(f"Network Error occoured: {e}")
                 network_error = True
@@ -64,18 +70,18 @@ def chess_match(white: Socket, black: Socket) -> None:
             if game.make_move_if_valid(move, Color.BLACK):
                 # TODO: Send current board configuration or latest move to the other player.
                 break
-            black.send("try again dumbass".encode(ENCODING))
+            black.send("try again dumbass".encode(encoding))
     
     match game.state:
         case GameState.DRAW:
-            white.send("draw".encode(ENCODING))
-            black.send("draw".encode(ENCODING))
+            white.send("draw".encode(encoding))
+            black.send("draw".encode(encoding))
         case GameState.WHITE_WON:
-            white.send("you won".encode(ENCODING))
-            black.send("you lost".encode(ENCODING))
+            white.send("you won".encode(encoding))
+            black.send("you lost".encode(encoding))
         case GameState.BLACK_WON:
-            white.send("you lost".encode(ENCODING))
-            black.send("you won".encode(ENCODING))
+            white.send("you lost".encode(encoding))
+            black.send("you won".encode(encoding))
         case _:
             print(f"Unhandled game ending: {game.state}")
 
@@ -84,23 +90,20 @@ def chess_match(white: Socket, black: Socket) -> None:
 
 
 if __name__ == "__main__":
-    conf = {
-        "host": "127.0.0.1",
-        "port": 9999,
-        "filename": "%Y_%m_%d_%Hh%Mm%Ss"
-    }
+    conf = DEFAULT_SERVER_CONF
 
     # load server configuration values
     with open(SERVER_CONFIG_FILE, "r") as file:
         for line in file.readlines():
             line = line.strip()
-            lol = line.split("=", 1)
-            conf[lol[0]] = lol[1]
+            val_key = line.split("=", 1)
+            conf[val_key[0]] = val_key[1]
     
     try:
         conf["port"] = int(conf["port"])
+        conf["buffsize"] = int(conf["buffsize"])
     except Exception as e:
         print(e)
     else:
-        server = Server(conf, chess_match, ENCODING, LOGS_DIR)
+        server = Server(conf, chess_match)
         server.listen()
