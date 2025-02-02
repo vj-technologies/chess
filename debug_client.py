@@ -1,7 +1,7 @@
 from socket import socket as Socket, AF_INET, SOCK_STREAM
 from threading import Thread
 
-HOST, PORT = "localhost", 9999
+HOST, PORT = input("Host: "), int(input("Port: "))
 BUFFSIZE = 1024
 ENCODING = "utf-8"
 
